@@ -59,8 +59,6 @@ int main(int argc, char const *argv[]) {
 void* task0(void* arg) {
 	TaskInfo *info = (TaskInfo*) arg;
 
-	// printf("%d, %d", info->nb, info->next);
-
 	while(1) {
 		sem_wait(&mutexList[info->nb]);
 		puts("\x1b[31mtask0 begin\x1b[0m");

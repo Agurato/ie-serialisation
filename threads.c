@@ -47,7 +47,7 @@ int main(int argc, char const *argv[]) {
 			line[strlen(line)-1] = '\0';
 		}
 		lineToken = strtok(line, ":");
-		lineNb = lineToken[0] - '0';
+		lineNb = atoi(lineToken);
 		lineTasks = strtok(NULL, ":");
 
 		while(lineToken != NULL) {
@@ -64,7 +64,7 @@ int main(int argc, char const *argv[]) {
 			/* printf("%d -> %s\n", taskNb, taskToken); */
 
 			taskArray[lineNb] = realloc(taskArray[lineNb], (taskNb+1)*sizeof(int));
-			taskArray[lineNb][taskNb] = taskToken[0] - '0';
+			taskArray[lineNb][taskNb] = atoi(taskToken);
 
 			printf("%d - %d;%d\n", totalTask, lineNb, taskNb);
 			tasks = realloc(tasks, totalTask*sizeof(pthread_t));

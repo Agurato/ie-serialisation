@@ -30,8 +30,11 @@ int main(int argc, char const *argv[]) {
 	char* lineToken;
 	char* taskToken;
 	char* lineTasks;
-	int taskNb = 0;
-	int lineNb = 1;
+	int taskNb = 0, lineNb = 0, totalTask = 0;
+
+	int i, j;
+
+	int **taskArray = NULL;
 
 	taskListFile = fopen("taskList.txt", "r");
 	if(taskListFile == NULL) {
@@ -39,53 +42,68 @@ int main(int argc, char const *argv[]) {
 	}
 
 	while((read = getline(&line, &length, taskListFile)) != -1) {
-		lineNb++;
 
 		if(line[strlen(line)-1] == '\n') {
 			line[strlen(line)-1] = '\0';
 		}
 		lineToken = strtok(line, ":");
-		
 		lineNb = lineToken[0] - '0';
-		
 		lineTasks = strtok(NULL, ":");
 
 		while(lineToken != NULL) {
 			lineToken = strtok(NULL, ":");
 		}
 
+		taskArray = realloc(taskArray, (lineNb+1)*sizeof(int*));
+		taskArray[lineNb] = NULL;
+
+		taskNb = 0;
 		taskToken = strtok(lineTasks, "-");
 		while(taskToken != NULL) {
-			taskNb ++;
+			totalTask ++;
 			/* printf("%d -> %s\n", taskNb, taskToken); */
 
-			tasks = realloc(tasks, taskNb*sizeof(pthread_t));
-			mutexList = malloc(taskNb*sizeof(sem_t));
-			taskInfo = malloc(taskNb*sizeof(TaskInfo));
+			taskArray[lineNb] = realloc(taskArray[lineNb], (taskNb+1)*sizeof(int));
+			taskArray[lineNb][taskNb] = taskToken[0] - '0';
 
+			printf("%d - %d;%d\n", totalTask, lineNb, taskNb);
+			tasks = realloc(tasks, totalTask*sizeof(pthread_t));
+			puts("tasks realloc done");
+			/*
+			mutexList = realloc(mutexList, totalTask*sizeof(sem_t));
+			puts("mutexList realloc done");
+			*/
+			taskInfo = realloc(taskInfo, totalTask*sizeof(TaskInfo));
+			puts("taskInfo realloc done");
+			/*
+			if(taskNb == 0) {
+				sem_init(&mutexList[totalTask], 0, 1);
+			}
+			else {
+				sem_init(&mutexList[totalTask], 0, 0);
+			}
+			*/
 			taskToken = strtok(NULL, "-");
+
+			taskNb ++;
 		}
 	}
-
-	printf("%d lines, %d tasks\n", lineNb, taskNb);
 
 	fclose(taskListFile);
 	if(line) {
 		free(line);
 	}
 
-	/*
-	tasks = malloc(taskNb*sizeof(pthread_t));
-	mutexList = malloc(taskNb*sizeof(sem_t));
-	taskInfo = malloc(taskNb*sizeof(TaskInfo));
-	*/
+	printf("%d lines, %d tasks\n", lineNb, totalTask);
 
+	mutexList = malloc(totalTask*sizeof(sem_t));
+	
 	sem_init(&mutexList[0], 0, 1);
 	sem_init(&mutexList[1], 0, 1);
 	sem_init(&mutexList[2], 0, 0);
 	sem_init(&mutexList[3], 0, 0);
 	sem_init(&mutexList[4], 0, 1);
-
+	
 	taskInfo[0].nb = 0;
 	taskInfo[0].next = 0;
 	taskInfo[1].nb = 1;

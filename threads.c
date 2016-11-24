@@ -16,15 +16,15 @@ int main(int argc, char const *argv[]) {
 	char* lineToken;
 	char* taskToken;
 	char* lineTasks;
+
 	/*
 	taskNb : place de la tâche dans la ligne
 	lineNb : place de la ligne dans le fichier
 	totalTask : nombre de tâches à exécuter
 	taskCount : compteur du nombre de tâches (incrémenté à chaque fois qu'on en voit une dans le fichier)
-	taskNbLine : nombre de tâches dans une ligne
 	lineBeginThreadNb : numéro de la tâche en début de ligne
 	*/
-	int taskNb = 0, lineNb = -1, totalTask = 0, taskCount = 0, taskNbLine = 0, lineBeginThreadNb = 0;
+	int taskNb = 0, lineNb = -1, totalTask = 0, taskCount = 0, lineBeginThreadNb = 0;
 
 	int i = 0;
 
@@ -44,12 +44,6 @@ int main(int argc, char const *argv[]) {
 			totalTask = atoi(strtok(NULL, ":"));
 
 			mutexList = malloc(totalTask*sizeof(sem_t));
-			sem_init(&mutexList[0], 0, 1);
-			sem_init(&mutexList[1], 0, 1);
-			sem_init(&mutexList[2], 0, 0);
-			sem_init(&mutexList[3], 0, 0);
-			sem_init(&mutexList[4], 0, 1);
-
 			tasks = malloc(totalTask*sizeof(pthread_t));
 			taskInfo = malloc(totalTask*sizeof(TaskInfo));
 
@@ -58,7 +52,6 @@ int main(int argc, char const *argv[]) {
 		lineNb ++;
 		lineBeginThreadNb = taskCount;
 
-		taskNbLine = atoi(lineToken);
 		lineTasks = strtok(NULL, ":");
 
 		while(lineToken != NULL) {
@@ -71,12 +64,21 @@ int main(int argc, char const *argv[]) {
 
 			if(strcmp(taskToken, "END") == 0) {
 				taskInfo[taskCount-1].nextThread = lineBeginThreadNb;
+
 				taskToken = strtok(NULL, "-");
 				taskInfo[taskCount-1].deadline = atoi(taskToken);
 
 				break;
 			}
 			else {
+
+				if(taskCount == lineBeginThreadNb) {
+					sem_init(&mutexList[taskCount], 0, 1);
+				}
+				else {
+					sem_init(&mutexList[taskCount], 0, 0);
+				}
+
 				taskInfo[taskCount].task = atoi(taskToken);
 				taskInfo[taskCount].threadNb = taskCount;
 				taskInfo[taskCount].line = lineNb;

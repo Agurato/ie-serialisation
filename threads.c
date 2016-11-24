@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
+#include <time.h>
 
 void* task0(void* arg);
 void* task1(void* arg);
@@ -17,9 +18,12 @@ typedef struct {
 	int nextThread;
 	int line;
 	int pos;
+	int deadline;
 } TaskInfo;
 
 sem_t* mutexList = NULL;
+time_t* lineStarts = NULL;
+time_t* lineEnds = NULL;
 
 int main(int argc, char const *argv[]) {
 	TaskInfo* taskInfo = NULL;
@@ -33,6 +37,14 @@ int main(int argc, char const *argv[]) {
 	char* lineToken;
 	char* taskToken;
 	char* lineTasks;
+	/*
+	taskNb : place de la tâche dans la ligne
+	lineNb : place de la ligne dans le fichier
+	totalTask : nombre de tâches à exécuter
+	taskCount : compteur du nombre de tâches (incrémenté à chaque fois qu'on en voit une dans le fichier)
+	taskNbLine : nombre de tâches dans une ligne
+	lineBeginThreadNb : numéro de la tâche en début de ligne
+	*/
 	int taskNb = 0, lineNb = -1, totalTask = 0, taskCount = 0, taskNbLine = 0, lineBeginThreadNb = 0;
 
 	int i = 0;
@@ -81,7 +93,9 @@ int main(int argc, char const *argv[]) {
 			if(strcmp(taskToken, "END") == 0) {
 				taskInfo[taskCount-1].nextThread = lineBeginThreadNb;
 				taskToken = strtok(NULL, "-");
-				continue;
+				taskInfo[taskCount-1].deadline = atoi(taskToken);
+
+				break;
 			}
 			else {
 				taskInfo[taskCount].task = atoi(taskToken);
@@ -89,6 +103,12 @@ int main(int argc, char const *argv[]) {
 				taskInfo[taskCount].line = lineNb;
 				taskInfo[taskCount].pos = taskNb;
 				taskInfo[taskCount].nextThread = taskCount+1;
+				if(taskNb == 0) {
+					taskInfo[taskCount].deadline = -2;
+				}
+				else {
+					taskInfo[taskCount].deadline = -1;
+				}
 			}
 			taskToken = strtok(NULL, "-");
 
@@ -105,32 +125,30 @@ int main(int argc, char const *argv[]) {
 
 	printf("%d lines, %d tasks\n", lineNb+1, totalTask);
 
+	lineStarts = malloc((lineNb+1)*sizeof(time_t));
+	lineEnds = malloc((lineNb+1)*sizeof(time_t));
+
 	for(i=0 ; i<totalTask ; i++) {
 		switch(taskInfo[i].task) {
-			case 0:
-				pthread_create(&tasks[i], NULL, task0, &taskInfo[i]);
-				break;
-			case 1:
-				pthread_create(&tasks[i], NULL, task1, &taskInfo[i]);
-				break;
-			case 2:
-				pthread_create(&tasks[i], NULL, task2, &taskInfo[i]);
-				break;
-			case 3:
-				pthread_create(&tasks[i], NULL, task3, &taskInfo[i]);
-				break;
-			case 4:
-				pthread_create(&tasks[i], NULL, task4, &taskInfo[i]);
-				break;
+		case 0:
+			pthread_create(&tasks[i], NULL, task0, &taskInfo[i]);
+			break;
+		case 1:
+			pthread_create(&tasks[i], NULL, task1, &taskInfo[i]);
+			break;
+		case 2:
+			pthread_create(&tasks[i], NULL, task2, &taskInfo[i]);
+			break;
+		case 3:
+			pthread_create(&tasks[i], NULL, task3, &taskInfo[i]);
+			break;
+		case 4:
+			pthread_create(&tasks[i], NULL, task4, &taskInfo[i]);
+			break;
 		}
-		printf("\n");
 	}
 
 	for(i=0 ; i<5 ; i++) {
-		pthread_join(tasks[i], NULL);
-		pthread_join(tasks[i], NULL);
-		pthread_join(tasks[i], NULL);
-		pthread_join(tasks[i], NULL);
 		pthread_join(tasks[i], NULL);
 	}
 
@@ -142,9 +160,31 @@ void* task0(void* arg) {
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
-		puts("\x1b[31mtask0 begin\x1b[0m");
+		printf("\x1b[31mtask0 begin\x1b[0m");
+		if(info->deadline == -2 || info->threadNb == info->nextThread) {
+			puts(" - timer starts\x1b[0m");
+			time(&lineStarts[info->line]);
+		}
+		else {
+			puts("");
+		}
+
 		sleep(2);
-		puts("\x1b[31mtask0 end\x1b[0m");
+
+		if(info->deadline != -2 && info->deadline != -1) {
+			time(&lineEnds[info->line]);
+			double diff = difftime(lineEnds[info->line], lineStarts[info->line]);
+			int millidiff = 1000*diff;
+			if(millidiff < info->deadline) {
+				printf("\x1b[31mtask0 end (%d < %d) OK\x1b[0m\n", millidiff, info->deadline);
+			}
+			else {
+				printf("\x1b[31mtask0 end (%d > %d) PAS OK\x1b[0m\n", millidiff, info->deadline);
+			}
+		}
+		else {
+			puts("\x1b[31mtask0 end\x1b[0m");
+		}
 		sem_post(&mutexList[info->nextThread]);
 	}
 
@@ -157,9 +197,31 @@ void* task1(void* arg) {
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
-		puts("\x1b[32mtask1 begin\x1b[0m");
+		printf("\x1b[32mtask1 begin\x1b[0m");
+		if(info->deadline == -2 || info->threadNb == info->nextThread) {
+			puts(" - timer starts\x1b[0m");
+			time(&lineStarts[info->line]);
+		}
+		else {
+			puts("");
+		}
+
 		sleep(2);
-		puts("\x1b[32mtask1 end\x1b[0m");
+
+		if(info->deadline != -2 && info->deadline != -1) {
+			time(&lineEnds[info->line]);
+			double diff = difftime(lineEnds[info->line], lineStarts[info->line]);
+			int millidiff = 1000*diff;
+			if(millidiff < info->deadline) {
+				printf("\x1b[32mtask1 end (%d < %d) OK\x1b[0m\n", millidiff, info->deadline);
+			}
+			else {
+				printf("\x1b[32mtask1 end (%d > %d) PAS OK\x1b[0m\n", millidiff, info->deadline);
+			}
+		}
+		else {
+			puts("\x1b[32mtask1 end\x1b[0m");
+		}
 		sem_post(&mutexList[info->nextThread]);
 	}
 
@@ -172,9 +234,31 @@ void* task2(void* arg) {
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
-		puts("\x1b[32mtask2 begin\x1b[0m");
+		printf("\x1b[32mtask2 begin\x1b[0m");
+		if(info->deadline == -2 || info->threadNb == info->nextThread) {
+			puts(" - timer starts\x1b[0m");
+			time(&lineStarts[info->line]);
+		}
+		else {
+			puts("");
+		}
+
 		sleep(2);
-		puts("\x1b[32mtask2 end\x1b[0m");
+
+		if(info->deadline != -2 && info->deadline != -1) {
+			time(&lineEnds[info->line]);
+			double diff = difftime(lineEnds[info->line], lineStarts[info->line]);
+			int millidiff = 1000*diff;
+			if(millidiff < info->deadline) {
+				printf("\x1b[32mtask2 end (%d < %d) OK\x1b[0m\n", millidiff, info->deadline);
+			}
+			else {
+				printf("\x1b[32mtask2 end (%d > %d) PAS OK\x1b[0m\n", millidiff, info->deadline);
+			}
+		}
+		else {
+			puts("\x1b[32mtask2 end\x1b[0m");
+		}
 		sem_post(&mutexList[info->nextThread]);
 	}
 
@@ -187,9 +271,31 @@ void* task3(void* arg) {
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
-		puts("\x1b[32mtask3 begin\x1b[0m");
+		printf("\x1b[32mtask3 begin\x1b[0m");
+		if(info->deadline == -2 || info->threadNb == info->nextThread) {
+			puts(" - timer starts\x1b[0m");
+			time(&lineStarts[info->line]);
+		}
+		else {
+			puts("");
+		}
+
 		sleep(2);
-		puts("\x1b[32mtask3 end\x1b[0m");
+
+		if(info->deadline != -2 && info->deadline != -1) {
+			time(&lineEnds[info->line]);
+			double diff = difftime(lineEnds[info->line], lineStarts[info->line]);
+			int millidiff = 1000*diff;
+			if(millidiff < info->deadline) {
+				printf("\x1b[32mtask3 end (%d < %d) OK\x1b[0m\n", millidiff, info->deadline);
+			}
+			else {
+				printf("\x1b[32mtask3 end (%d > %d) PAS OK\x1b[0m\n", millidiff, info->deadline);
+			}
+		}
+		else {
+			puts("\x1b[32mtask3 end\x1b[0m");
+		}
 		sem_post(&mutexList[info->nextThread]);
 	}
 
@@ -202,9 +308,31 @@ void* task4(void* arg) {
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
-		puts("\x1b[34mtask4 begin\x1b[0m");
+		printf("\x1b[34mtask4 begin\x1b[0m");
+		if(info->deadline == -2 || info->threadNb == info->nextThread) {
+			puts(" - timer starts\x1b[0m");
+			time(&lineStarts[info->line]);
+		}
+		else {
+			puts("");
+		}
+
 		sleep(2);
-		puts("\x1b[34mtask4 end\x1b[0m");
+
+		if(info->deadline != -2 && info->deadline != -1) {
+			time(&lineEnds[info->line]);
+			double diff = difftime(lineEnds[info->line], lineStarts[info->line]);
+			int millidiff = 1000*diff;
+			if(millidiff < info->deadline) {
+				printf("\x1b[34mtask4 end (%d < %d) OK\x1b[0m\n", millidiff, info->deadline);
+			}
+			else {
+				printf("\x1b[34mtask4 end (%d > %d) PAS OK\x1b[0m\n", millidiff, info->deadline);
+			}
+		}
+		else {
+			puts("\x1b[34mtask4 end\x1b[0m");
+		}
 		sem_post(&mutexList[info->nextThread]);
 	}
 

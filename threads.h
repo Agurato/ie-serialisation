@@ -20,8 +20,6 @@ typedef struct {
 	int line;
 	/* position de la tâche dans la ligne */
 	int pos;
-	/* deadline à atteindre */
-	int deadline;
 } TaskInfo;
 
 typedef struct {

@@ -7,7 +7,7 @@
 #include <time.h>
 #include <dlfcn.h>
 
-void* startThreads(void* arg);
+void* startThread(void* arg);
 
 typedef struct {
 	/* numéro de la tâche à exécuter (fonction appelée) */
@@ -18,8 +18,6 @@ typedef struct {
 	int nextThread;
 	/* numéro de la ligne */
 	int line;
-	/* position de la tâche dans la ligne */
-	int pos;
 } TaskInfo;
 
 typedef struct {

@@ -108,7 +108,6 @@ int main(int argc, char const *argv[]) {
 				taskInfo[taskCount].task = atoi(taskToken);
 				taskInfo[taskCount].threadNb = taskCount;
 				taskInfo[taskCount].line = lineNb;
-				taskInfo[taskCount].pos = taskNb;
 				taskInfo[taskCount].nextThread = taskCount+1;
 			}
 			taskToken = strtok(NULL, "-");
@@ -133,7 +132,7 @@ int main(int argc, char const *argv[]) {
 
 	/* Création des threads */
 	for(i=0 ; i<totalTask ; i++) {
-		pthread_create(&tasks[i], NULL, startThreads, &taskInfo[i]);
+		pthread_create(&tasks[i], NULL, startThread, &taskInfo[i]);
 	}
 
 	/* Attente de la fin des threads */
@@ -147,7 +146,7 @@ int main(int argc, char const *argv[]) {
 	return 0;
 }
 
-void* startThreads(void* arg) {
+void* startThread(void* arg) {
 	/* Récupération des infos de la tâche */
 	TaskInfo *info = (TaskInfo*) arg;
 
@@ -157,6 +156,13 @@ void* startThreads(void* arg) {
 	/* Chargement du nom de la tâche à appeler */
 	taskName = malloc(7*sizeof(char));
 	sprintf(taskName, "task%d", info->task);
+
+	/* Récupération de la tâche à appeler */
+	*(void **) (&taskPtr) = dlsym(tasksHandle, taskName);
+	if ((error = dlerror()) != NULL)  {
+		puts(error);
+		exit(1);
+	}
 
 	/* Boucle principale */
 	while(1) {
@@ -171,13 +177,7 @@ void* startThreads(void* arg) {
 		else {
 			printf("\x1b[%dmline %d : task%d begin\x1b[0m\n", 31+info->task, info->line, info->task);
 		}
-
-		/* Récupération de la tâche à appeler */
-		*(void **) (&taskPtr) = dlsym(tasksHandle, taskName);
-		if ((error = dlerror()) != NULL)  {
-            puts(error);
-            exit(1);
-        }
+		
 		/* Appel de la tâche */
 		(*taskPtr)();
 

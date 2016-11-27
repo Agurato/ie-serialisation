@@ -10,11 +10,11 @@ Après avoir récupéré toutes les informations relatives aux tâches à exécu
 Le déroulement de la fonction `startThread()` est le suivant :
 - Récupération des informations sur la tâche à effectuer (mutex et autres valeurs)
 - Boucle principale ( `while(1)` ) :
-- Attente de la libération (puis prise) du mutex avec sem_wait
+- Attente de la libération (puis prise) du mutex avec `sem_wait`
 - Début du timer si cette tâche est en début de ligne
 - Appel de la fonction à exécuter
 - Fin du timer.
-  - Si l’échéance est dépassée, on libère le mutex de la tâche en début de ligne.
+  - Si l’échéance est dépassée, on libère le mutex avec `sem_post` de la tâche en début de ligne.
   - Sinon, on libère le mutex de la tâche suivante.
   
 ## Utilisation du programme

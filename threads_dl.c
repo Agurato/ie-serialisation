@@ -148,7 +148,7 @@ void* startThreads(void* arg) {
 	taskName = malloc(7*sizeof(char));
 	sprintf(taskName, "task%d", info->task);
 
-	void (*taskPtr)(void);
+	void (*taskPtr)();
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
@@ -160,7 +160,7 @@ void* startThreads(void* arg) {
 			printf("\x1b[%dmline %d : task%d begin\x1b[0m\n", 31+info->task, info->line, info->task);
 		}
 
-		taskPtr = (void (*)(void)) dlsym(tasksHandle, taskName);
+		*(void **) (&taskPtr) = dlsym(tasksHandle, taskName);
 		if ((error = dlerror()) != NULL)  {
             puts(error);
             exit(1);

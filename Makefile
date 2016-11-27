@@ -1,4 +1,4 @@
-all: tasks
+all: tasks threads.c threads.h
 	gcc -Wall -pedantic -pthread -o threads.out threads.c -ldl
 
 tasks: tasks.c tasks.h

@@ -1,9 +1,11 @@
-#include "threads.h"
+#include "threads_dl.h"
 
 sem_t* mutexList = NULL;
 LineInfo* lineInfo = NULL;
 time_t* lineStarts = NULL;
 time_t* lineEnds = NULL;
+
+void* tasksHandle = NULL;
 
 int main(int argc, char const *argv[]) {
 	TaskInfo* taskInfo = NULL;
@@ -118,6 +120,12 @@ int main(int argc, char const *argv[]) {
 	lineStarts = malloc((lineNb+1)*sizeof(time_t));
 	lineEnds = malloc((lineNb+1)*sizeof(time_t));
 
+	tasksHandle = dlopen("./tasks.so", RTLD_LAZY);
+	if(! tasksHandle) {
+		puts(dlerror());
+		return 1;
+	}
+
 	for(i=0 ; i<totalTask ; i++) {
 		pthread_create(&tasks[i], NULL, startThreads, &taskInfo[i]);
 	}
@@ -126,11 +134,18 @@ int main(int argc, char const *argv[]) {
 		pthread_join(tasks[i], NULL);
 	}
 
+	dlclose(tasksHandle);
+
 	return 0;
 }
 
 void* startThreads(void* arg) {
 	TaskInfo *info = (TaskInfo*) arg;
+
+    char *error;
+	char* taskName = NULL;
+	taskName = malloc(7*sizeof(char));
+	sprintf(taskName, "task%d", info->task);
 
 	while(1) {
 		sem_wait(&mutexList[info->threadNb]);
@@ -141,7 +156,7 @@ void* startThreads(void* arg) {
 		else {
 			printf("\x1b[%dmline %d : task%d begin\x1b[0m\n", 31+info->task, info->line, info->task);
 		}
-
+		/*
 		switch(info->task) {
 		case 0:
 			task0();
@@ -159,6 +174,14 @@ void* startThreads(void* arg) {
 			task4();
 			break;
 		}
+		*/
+		printf("%s\n", taskName);
+		sleep(2);
+		dlsym(tasksHandle, taskName);
+		if ((error = dlerror()) != NULL)  {
+            fputs(error, stderr);
+            exit(1);
+        }
 
 		time(&lineInfo[info->line].end);
 		double diff = difftime(lineInfo[info->line].end, lineInfo[info->line].start);
@@ -180,24 +203,4 @@ void* startThreads(void* arg) {
 	}
 
 	return 0;
-}
-
-void task0() {
-	sleep(2);
-}
-
-void task1() {
-	sleep(2);
-}
-
-void task2() {
-	sleep(2);
-}
-
-void task3() {
-	sleep(2);
-}
-
-void task4() {
-	sleep(2);
 }

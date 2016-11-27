@@ -1,4 +1,5 @@
-# ie-serialisation
+# TP d'IE sur la sérialisation
 
-## TODO
-- Thread général qui appelle les fonctions
+```shell
+gcc -Wall -pedantic -pthread -o threads.out threads.c
+```

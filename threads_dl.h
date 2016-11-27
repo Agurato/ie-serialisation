@@ -5,14 +5,9 @@
 #include <semaphore.h>
 #include <string.h>
 #include <time.h>
+#include <dlfcn.h>
 
 void* startThreads(void* arg);
-
-void task0();
-void task1();
-void task2();
-void task3();
-void task4();
 
 typedef struct {
 	/* numéro de la tâche à exécuter (fonction appelée) */

@@ -170,21 +170,22 @@ void* startThread(void* arg) {
 		sem_wait(&mutexList[info->threadNb]);
 		/* Si on est au début de la ligne */
 		if(info->threadNb == lineInfo[info->line].firstTask) {
-			/* Début du timer */
-			time(&lineInfo[info->line].start);
 			printf("\x1b[%dmline %d : task%d begin - timer starts\x1b[0m\n", 31+info->task, info->line, info->task);
+			/* Début du timer */
+			clock_gettime(CLOCK_MONOTONIC, &lineInfo[info->line].start);
 		}
 		else {
 			printf("\x1b[%dmline %d : task%d begin\x1b[0m\n", 31+info->task, info->line, info->task);
 		}
-		
+
 		/* Appel de la tâche */
 		(*taskPtr)();
 
 		/* Fin du timer */
-		time(&lineInfo[info->line].end);
-		double diff = difftime(lineInfo[info->line].end, lineInfo[info->line].start);
-		int millidiff = 1000*diff;
+		clock_gettime(CLOCK_MONOTONIC, &lineInfo[info->line].end);
+
+		struct timespec diff = timespecDiff(lineInfo[info->line].start, lineInfo[info->line].end);
+		int millidiff = (diff.tv_sec * 1000) + (diff.tv_nsec / 1000000);
 		int deadline = lineInfo[info->line].deadline;
 		/* Si la deadline n'a pas été dépassée */
 		if(millidiff < deadline) {
@@ -206,4 +207,18 @@ void* startThread(void* arg) {
 	}
 
 	return 0;
+}
+
+struct timespec timespecDiff(struct timespec start, struct timespec stop) {
+	struct timespec diff = {0, 0};
+
+    if ((stop.tv_nsec - start.tv_nsec) < 0) {
+        diff.tv_sec = stop.tv_sec - start.tv_sec - 1;
+        diff.tv_nsec = stop.tv_nsec - start.tv_nsec + 1000000000;
+    } else {
+        diff.tv_sec = stop.tv_sec - start.tv_sec;
+        diff.tv_nsec = stop.tv_nsec - start.tv_nsec;
+    }
+
+    return diff;
 }

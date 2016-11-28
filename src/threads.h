@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 
 void* startThread(void* arg);
+struct timespec timespecDiff(struct timespec start, struct timespec stop);
 
 typedef struct {
 	/* numéro de la tâche à exécuter (fonction appelée) */
@@ -26,7 +27,7 @@ typedef struct {
 	/* numéro de la première tâche sur la ligne */
 	int firstTask;
 	/* temps de début et de fin de la ligne */
-	time_t start, end;
+	struct timespec start, end;
 	/* deadline à atteindre */
 	int deadline;
 } LineInfo;

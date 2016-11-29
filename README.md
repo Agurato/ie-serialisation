@@ -1,11 +1,41 @@
-# TP d'IE sur la sérialisation
+# TP d'IE sur la sérialisation - Vincent Monot
 
 ## Déroulement du programme
-Le fichier **threads.c** est le fichier contenant le programme principal (avec le fichier de headers correspondant **threads.h**. Les fichiers **tasks.c** et **tasks.h** contiennent les fonctions appelées par les threads et chargées à chaud par les threads.
+Le fichier **threads.c** est le fichier contenant le programme principal (avec le fichier de headers correspondant **threads.h**). Les fichiers **tasks.c** et **tasks.h** contiennent les fonctions appelées par les threads et chargées à chaud par ceux-ci.
 
-Lors du parsing du fichier, chaque nouvelle tâche à appeler est enregistrée dans un tableau de `TaskInfo`, structure contenant le nom de la fonction à appeler, le numéro du thread, le numéro du thread suivant, ainsi que la ligne sur la quelle cette tâche se trouve.
+Lors du parsing du fichier, chaque nouvelle tâche à appeler est enregistrée dans un tableau de `TaskInfo` :
+```c
+typedef struct {
+	// numéro de la tâche à exécuter (fonction appelée)
+	int task;
+	// numéro du thread (pour le tableau de mutex)
+	int threadNb;
+	// numéro du thread à exécuter ensuite
+	int nextThread;
+	// numéro de la ligne
+	int line;
+} TaskInfo;
+```
+Pour récupérer les deadlines à respecter, une structure `LineInfo` est utilisée de la manière suivante :
+```c
+typedef struct {
+	// nombre de tâches dans la ligne
+	int taskNb;
+	// numéro de la première tâche sur la ligne
+	int firstTask;
+	// temps de début et de fin de la ligne
+	struct timespec start, end;
+	// deadline à atteindre
+	int deadline;
+} LineInfo;
+```
 
-Après avoir récupéré toutes les informations relatives aux tâches à exécuter, les threads sont lancés et c’est la fonction `startThread()` qui est donnée en tant que paramètre que `pthread_create()`.
+Après avoir récupéré toutes les informations relatives aux tâches à exécuter, les threads sont lancés et c’est la fonction `startThread()` qui est donnée en tant que paramètre que `pthread_create()` :
+```c
+// pthread_t* tasks: tableau des threads (1 thread pour 1 tâche)
+// TaskInfo* taskInfo: tableau des infos sur les tâches
+pthread_create(&tasks[i], NULL, startThread, &taskInfo[i]);
+```
 
 Le déroulement de la fonction `startThread()` est le suivant :
 - Récupération des informations sur la tâche à effectuer (mutex et autres valeurs)
@@ -16,7 +46,7 @@ Le déroulement de la fonction `startThread()` est le suivant :
 - Fin du timer.
   - Si l’échéance est dépassée, on libère le mutex avec `sem_post` de la tâche en début de ligne.
   - Sinon, on libère le mutex de la tâche suivante.
-  
+
 ## Utilisation du programme
 Le fichier **taskList.txt** contient la liste des tâches à effectuer. Il est sous la forme :
 ```
@@ -24,8 +54,9 @@ TASK_NB:<nombre total de tâches>
 LINE_NB:<nombre de lignes>
 <nb de tâches sur la ligne>:<num. des fcts à appeler>-…-END-<échéance de la ligne>
 ```
-Pour lancer le programme, taper :
+Pour lancer le programme :
 ```
+cd src
 make
 ./threads.out
 ```

@@ -1,6 +1,8 @@
 # TP d'IE sur la sérialisation - Vincent Monot
 
-## Sérialisation
+## Sérialisation et appel des fonctions
+
+### Sérialisation des threads
 La méthode pour sérialiser les threads est la suivante :
 
 Chaque thread du programme est "associé" à un mutex. Au démarrage du programme, les threads situés en début de ligne ont leurs mutex initialisés à 1. Ceux qui ne sont pas en début de ligne on leurs mutex initialisés à 0.
@@ -9,8 +11,13 @@ Lorsqu'une tâche est finie, le programme vérifie si la deadline de la ligne a 
 - Si ce n'est pas le cas, le mutex de la tâche suivante sur la ligne est libéré.
 - Si c'est le cas, le mutex du début de ligne est libéré
 
+### Appel des fonctions
+Les fonctions utilisées pour simuler une opération sont situées dans le fichier **tasks.c** (avec le header **tasks.h**).
+
+Ces fonctions sont chargées à chaud par le thread à l'aide des fonctions `dlopen()` et `dlsym()`
+
 ## Déroulement du programme
-Le fichier **threads.c** est le fichier contenant le programme principal (avec le fichier de headers correspondant **threads.h**). Les fichiers **tasks.c** et **tasks.h** contiennent les fonctions appelées par les threads et chargées à chaud par ceux-ci.
+Le fichier **threads.c** est le fichier contenant le programme principal (avec le fichier de headers correspondant **threads.h**).
 
 Lors du parsing du fichier, chaque nouvelle tâche à appeler est enregistrée dans un tableau de `TaskInfo` :
 ```c
@@ -53,7 +60,7 @@ Le déroulement de la fonction `startThread()` est le suivant :
 	- Début du timer si cette tâche est en début de ligne
 	- Appel de la fonction à exécuter
 	- Fin du timer.
-		- Si l’échéance est dépassée, on libère le mutex (avec `sem_post`) de la tâche en début de ligne.
+		- Si l’échéance est dépassée, on libère le mutex (avec `sem_post`) de la tâche en début de ligne, et on informe l'utilisateur de l'échéance de la ligne
 		- Sinon, on libère le mutex de la tâche suivante.
 
 ## Utilisation du programme
@@ -61,7 +68,7 @@ Le fichier **taskList.txt** contient la liste des tâches à effectuer. Il est s
 ```
 TASK_NB:<nombre total de tâches>
 LINE_NB:<nombre de lignes>
-<nb de tâches sur la ligne>:<num. des fcts à appeler>-…-END-<échéance de la ligne>
+<nb de tâches sur la ligne>:<num. des fcts à appeler>-…-END-<échéance de la ligne (en ms)>
 ```
 Pour lancer le programme :
 ```

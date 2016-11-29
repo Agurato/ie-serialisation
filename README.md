@@ -49,12 +49,12 @@ pthread_create(&tasks[i], NULL, startThread, &taskInfo[i]);
 Le déroulement de la fonction `startThread()` est le suivant :
 - Récupération des informations sur la tâche à effectuer (mutex et autres valeurs)
 - Boucle principale ( `while(1)` ) :
-- Attente de la libération (puis prise) du mutex avec `sem_wait`
-- Début du timer si cette tâche est en début de ligne
-- Appel de la fonction à exécuter
-- Fin du timer.
-  - Si l’échéance est dépassée, on libère le mutex avec `sem_post` de la tâche en début de ligne.
-  - Sinon, on libère le mutex de la tâche suivante.
+	- Attente de la libération (puis prise) du mutex avec `sem_wait`
+	- Début du timer si cette tâche est en début de ligne
+	- Appel de la fonction à exécuter
+	- Fin du timer.
+		- Si l’échéance est dépassée, on libère le mutex (avec `sem_post`) de la tâche en début de ligne.
+		- Sinon, on libère le mutex de la tâche suivante.
 
 ## Utilisation du programme
 Le fichier **taskList.txt** contient la liste des tâches à effectuer. Il est sous la forme :

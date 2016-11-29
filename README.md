@@ -1,4 +1,4 @@
-# TP d'IE sur la sérialisation - Vincent Monot
+# Temp réel mou et Linux - sérialisation de threads
 
 ## Sérialisation et appel des fonctions
 

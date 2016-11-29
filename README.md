@@ -1,5 +1,14 @@
 # TP d'IE sur la sérialisation - Vincent Monot
 
+## Sérialisation
+La méthode pour sérialiser les threads est la suivante :
+
+Chaque thread du programme est "associé" à un mutex. Au démarrage du programme, les threads situés en début de ligne ont leurs mutex initialisés à 1. Ceux qui ne sont pas en début de ligne on leurs mutex initialisés à 0.
+
+Lorsqu'une tâche est finie, le programme vérifie si la deadline de la ligne a été atteinte.
+- Si ce n'est pas le cas, le mutex de la tâche suivante sur la ligne est libéré.
+- Si c'est le cas, le mutex du début de ligne est libéré
+
 ## Déroulement du programme
 Le fichier **threads.c** est le fichier contenant le programme principal (avec le fichier de headers correspondant **threads.h**). Les fichiers **tasks.c** et **tasks.h** contiennent les fonctions appelées par les threads et chargées à chaud par ceux-ci.
 
@@ -56,7 +65,6 @@ LINE_NB:<nombre de lignes>
 ```
 Pour lancer le programme :
 ```
-cd src
 make
 ./threads.out
 ```
